@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThreeWorld from '../components/ThreeWorld';
 
 interface Car {
   id: number;
@@ -52,7 +53,7 @@ export default function DonsterlGame() {
     setNotifications(prev => [...prev, msg]);
     setTimeout(() => {
       setNotifications(prev => prev.slice(1));
-    }, 2200);
+    }, 2400);
   };
 
   const upgradeCar = (id: number) => {
@@ -84,8 +85,9 @@ export default function DonsterlGame() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0a0c14] text-white font-sans">
+      {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(#1a1f2e_0.8px,transparent_1px)] bg-[length:5px_5px]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/65 to-black/95" />
 
       {/* Floating Notifications */}
       <div className="fixed top-6 right-6 z-50 space-y-2">
@@ -96,7 +98,7 @@ export default function DonsterlGame() {
               initial={{ opacity: 0, y: -20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-[#ff2d55] text-black px-5 py-2 text-sm font-bold tracking-widest rounded"
+              className="bg-[#ff2d55] text-black px-6 py-2.5 text-sm font-bold tracking-[2px] rounded-lg shadow-xl"
             >
               {msg}
             </motion.div>
@@ -104,73 +106,84 @@ export default function DonsterlGame() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 p-4 max-w-[1520px] mx-auto">
-        {/* Top Bar */}
-        <div className="flex justify-between items-center mb-4">
+      <div className="relative z-10 p-5 max-w-[1540px] mx-auto">
+        {/* Top Navigation */}
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <div className="text-[#ff2d55] text-[42px] leading-none font-black tracking-[-4px]">MODEL CITIZEN</div>
-            <div className="text-[10px] tracking-[4px] text-[#ff2d55]/70 -mt-1">VICE CITY • 1986</div>
+            <div className="text-[#ff2d55] text-[46px] leading-none font-black tracking-[-4.5px]">MODEL CITIZEN</div>
+            <div className="text-[10px] tracking-[5px] text-[#ff2d55]/60 -mt-1">VICE CITY • 1986</div>
           </div>
 
           <div className="flex gap-2">
-            <button onClick={() => setView('dashboard')} className={`px-7 py-2 text-sm font-medium transition-all ${view === 'dashboard' ? 'bg-[#ff2d55] text-black' : 'border border-white/30'}`}>
+            <button 
+              onClick={() => setView('dashboard')} 
+              className={`px-8 py-2.5 text-sm font-semibold tracking-[1px] transition-all duration-200 ${view === 'dashboard' 
+                ? 'bg-[#ff2d55] text-black shadow-lg' 
+                : 'border border-white/25 hover:bg-white/5'}`}
+            >
               MANAGEMENT
             </button>
-            <button onClick={() => setView('world')} className={`px-7 py-2 text-sm font-medium transition-all ${view === 'world' ? 'bg-[#ff2d55] text-black' : 'border border-white/30'}`}>
+            <button 
+              onClick={() => setView('world')} 
+              className={`px-8 py-2.5 text-sm font-semibold tracking-[1px] transition-all duration-200 ${view === 'world' 
+                ? 'bg-[#ff2d55] text-black shadow-lg' 
+                : 'border border-white/25 hover:bg-white/5'}`}
+            >
               3D WORLD
             </button>
           </div>
 
-          <div className="text-right font-mono">
-            <div className="text-2xl text-[#ff2d55]">${cash.toLocaleString()}</div>
-            <div className="text-[10px] text-[#666] -mt-1">CASH</div>
+          <div className="text-right">
+            <div className="text-3xl font-mono text-[#ff2d55] tracking-wider">${cash.toLocaleString()}</div>
+            <div className="text-[10px] text-[#555] -mt-1 tracking-[2px]">CASH ON HAND</div>
           </div>
         </div>
 
         {view === 'dashboard' ? (
-          <div className="grid grid-cols-12 gap-4">
+          /* PREMIUM MANAGEMENT DASHBOARD */
+          <div className="grid grid-cols-12 gap-5">
             {/* Character Card */}
-            <div className="col-span-12 md:col-span-3 bg-[#11151f] border border-[#ff2d55]/40 rounded-2xl p-6">
-              <div className="uppercase text-xs tracking-[3px] text-[#ff2d55]">GOLDCREST SOCIETY FIXER</div>
-              <div className="text-4xl font-bold tracking-[-1.5px] mt-3 leading-none">VICTORIA<br />‘VIX’ LANG</div>
-              <div className="text-sm text-[#777] mt-4">Society Lawyer &amp; Political Fixer</div>
+            <div className="col-span-12 md:col-span-3 bg-[#11151f] border border-[#ff2d55]/30 rounded-3xl p-8">
+              <div className="uppercase text-xs tracking-[4px] text-[#ff2d55]">GOLDCREST SOCIETY FIXER</div>
+              <div className="text-[42px] font-bold tracking-[-2px] leading-[42px] mt-4">VICTORIA<br />‘VIX’ LANG</div>
+              <div className="text-[#777] mt-3 text-sm">Society Lawyer &amp; Political Fixer</div>
 
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                <button className="bg-[#ff2d55] py-3 text-sm font-bold text-black active:scale-[0.985]">RECRUIT</button>
-                <button className="border border-white/30 py-3 text-sm active:scale-[0.985]">DISMISS</button>
+              <div className="mt-10 grid grid-cols-2 gap-3">
+                <button className="bg-[#ff2d55] py-4 text-sm font-bold text-black tracking-[1px] active:scale-[0.985] transition">RECRUIT</button>
+                <button className="border border-white/20 py-4 text-sm tracking-[1px] active:scale-[0.985] transition">DISMISS</button>
               </div>
             </div>
 
-            {/* Objective */}
-            <div className="col-span-12 md:col-span-6 bg-[#11151f] border border-[#ff2d55]/40 rounded-2xl p-5 flex flex-col justify-center">
-              <div className="text-xs tracking-[3px] text-[#ff2d55]">CURRENT OBJECTIVE</div>
-              <div className="text-2xl font-bold tracking-tight mt-1">HOST THE CHARITY AUCTION</div>
-              <div className="text-[#888] text-sm mt-1">Goldcrest Hills Estate • 11:11 AM</div>
+            {/* Objective Banner */}
+            <div className="col-span-12 md:col-span-6 bg-[#11151f] border border-[#ff2d55]/30 rounded-3xl p-8 flex flex-col justify-center">
+              <div className="text-xs tracking-[4px] text-[#ff2d55]">CURRENT OBJECTIVE</div>
+              <div className="text-3xl font-bold tracking-[-1px] mt-2">HOST THE CHARITY AUCTION</div>
+              <div className="text-[#666] mt-1">Goldcrest Hills Estate • {time}</div>
             </div>
 
             {/* Right HUD */}
-            <div className="col-span-12 md:col-span-3 bg-[#11151f] border border-[#ff2d55]/40 rounded-2xl p-5">
-              <div className="flex justify-between text-xs">
-                <div>WANTED</div>
+            <div className="col-span-12 md:col-span-3 bg-[#11151f] border border-[#ff2d55]/30 rounded-3xl p-8">
+              <div className="flex justify-between text-xs tracking-[2px]">
+                <div>WANTED LEVEL</div>
                 <div className="text-[#ff2d55] tracking-widest">{'★'.repeat(wantedLevel)}{'☆'.repeat(5-wantedLevel)}</div>
               </div>
-              <div className="mt-4 text-xs text-[#888]">TIME: {time}</div>
-              <div className="text-xs text-[#888]">AMMO: 17/120</div>
+              <div className="mt-8 text-xs text-[#666] tracking-[1px]">TIME: {time}</div>
+              <div className="text-xs text-[#666] tracking-[1px]">AMMO: 17/120</div>
             </div>
 
             {/* Luxury Fleet */}
-            <div className="col-span-12 md:col-span-7 bg-[#11151f] border border-[#ff2d55]/40 rounded-2xl p-6">
-              <div className="text-[#ff2d55] text-sm tracking-[2px] mb-4">LUXURY FLEET</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="col-span-12 md:col-span-7 bg-[#11151f] border border-[#ff2d55]/30 rounded-3xl p-8">
+              <div className="text-[#ff2d55] text-sm tracking-[3px] mb-6">LUXURY FLEET</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {fleet.map(car => (
-                  <div key={car.id} className="bg-[#0a0c14] rounded-xl p-4 border border-white/10">
-                    <div className="font-semibold text-lg">{car.name}</div>
-                    <div className="text-xs text-[#666]">{car.model}</div>
-                    <div className="text-yellow-400 text-sm mt-3 tracking-widest">{'★'.repeat(car.level)}{'☆'.repeat(5-car.level)}</div>
+                  <div key={car.id} className="bg-[#0a0c14] rounded-2xl p-5 border border-white/10">
+                    <div className="font-semibold text-xl tracking-tight">{car.name}</div>
+                    <div className="text-xs text-[#555] mt-0.5">{car.model}</div>
+                    <div className="text-yellow-400 text-sm mt-4 tracking-[3px]">{'★'.repeat(car.level)}{'☆'.repeat(5-car.level)}</div>
                     <button 
                       onClick={() => upgradeCar(car.id)}
                       disabled={car.level >= 5}
-                      className="mt-4 w-full bg-[#ff2d55] py-2 text-xs font-bold text-black disabled:opacity-40 active:scale-[0.985]"
+                      className="mt-6 w-full bg-[#ff2d55] py-3 text-xs font-bold text-black tracking-[1.5px] disabled:opacity-40 active:scale-[0.985] transition"
                     >
                       {car.level >= 5 ? "MAX LEVEL" : "UPGRADE"}
                     </button>
@@ -180,11 +193,11 @@ export default function DonsterlGame() {
             </div>
 
             {/* Art Gallery */}
-            <div className="col-span-12 md:col-span-5 bg-[#11151f] border border-[#ff2d55]/40 rounded-2xl p-6">
-              <div className="text-[#ff2d55] text-sm tracking-[2px] mb-4">ART GALLERY VENTURES</div>
+            <div className="col-span-12 md:col-span-5 bg-[#11151f] border border-[#ff2d55]/30 rounded-3xl p-8">
+              <div className="text-[#ff2d55] text-sm tracking-[3px] mb-6">ART GALLERY VENTURES</div>
               {artGallery.map((art, index) => (
-                <div key={index} className="mb-4">
-                  <div className="flex justify-between text-xs mb-1.5">
+                <div key={index} className="mb-6">
+                  <div className="flex justify-between text-xs tracking-[1px] mb-2">
                     <div>{art.name}</div>
                     <div className="text-[#ff2d55]">{art.influence}</div>
                   </div>
@@ -192,26 +205,20 @@ export default function DonsterlGame() {
                     <motion.div 
                       className="h-2 bg-[#ff2d55] rounded-full" 
                       animate={{ width: `${art.influence}%` }}
-                      transition={{ duration: 0.6 }}
+                      transition={{ duration: 0.5 }}
                     />
                   </div>
                 </div>
               ))}
 
-              <div className="flex gap-3 mt-6">
-                <button onClick={expandInfluence} className="flex-1 bg-[#ff2d55] py-3 text-sm font-bold text-black active:scale-[0.985]">
-                  EXPAND INFLUENCE
-                </button>
-                <button onClick={hostGala} className="flex-1 border border-white/30 py-3 text-sm active:scale-[0.985]">
-                  HOST GALA
-                </button>
+              <div className="flex gap-4 mt-8">
+                <button onClick={expandInfluence} className="flex-1 bg-[#ff2d55] py-4 text-sm font-bold text-black tracking-[1px] active:scale-[0.985]">EXPAND INFLUENCE</button>
+                <button onClick={hostGala} className="flex-1 border border-white/20 py-4 text-sm tracking-[1px] active:scale-[0.985]">HOST GALA</button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="text-center py-20 text-[#555]">
-            3D World view (switch back to Management)
-          </div>
+          <ThreeWorld />
         )}
       </div>
     </div>

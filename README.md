@@ -1,17 +1,30 @@
 # Donsterl — Model Citizen
 
-**GTA-style cinematic game experience** built as a modern web prototype.
+**GTA-style game prototype** built in the browser.
 
 ## Overview
 
-Model Citizen is an interactive recreation of a Grand Theft Auto-style game landing and UI system. It captures the dark, cinematic atmosphere of classic GTA titles with:
+Model Citizen is a Vice City-inspired game experience featuring a management dashboard and a fully playable 3D world.
 
-- Bold cinematic hero with authentic GTA typography and branding
-- Immersive dark city aesthetic with scanlines and film grain
-- Navigation and calls-to-action styled after Rockstar's marketing
-- Foundation ready for expanding into full in-browser gameplay
+- Premium dark Miami Vice aesthetic
+- Interactive management HQ (Luxury Fleet, Art Gallery, Influence system)
+- Third-person 3D avatar world with mouse-look controls
+- Collectibles, minimap, and live economy
 
-Built with Next.js 16, TypeScript, and Tailwind CSS.
+## Features
+
+### Management Dashboard
+- Character card (Victoria ‘Vix’ Lang)
+- Luxury Fleet with upgradeable cars
+- Art Gallery Ventures with influence meters
+- Live cash, time, and wanted level
+
+### 3D World
+- WASD movement + mouse look (click to lock)
+- Head bob animation
+- 5 collectible orbs (increases cash)
+- Minimap showing player position + collectibles
+- Neon-lit city environment
 
 ## Getting Started
 
@@ -20,30 +33,26 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000)
 
-## Current Features
+## Controls (3D World)
 
-- High-impact landing hero matching GTA announcement style
-- Fully responsive with premium dark theme
-- Interactive hover states and micro-animations
-- Retro scanline and vignette effects
-
-## Planned / Next Steps
-
-- Interactive in-game HUD (wanted level, cash, radar/mini-map)
-- Draggable character or simple driving prototype using Canvas/WebGL
-- Phone interface, inventory, and mission system
-- Supabase integration for leaderboards and saved progress
-- Real audio (radio stations, SFX)
+- **WASD** — Move
+- **Mouse** — Look around (click to lock pointer)
+- **Walk over orbs** — Collect cash
 
 ## Tech Stack
 
-- Next.js 16 (App Router)
+- Next.js 16
 - TypeScript
-- Tailwind CSS 4
-- React hooks for state & interactions
+- Tailwind CSS
+- React Three Fiber (Three.js)
+- Framer Motion
+
+## Current Status
+
+Playable prototype with both management simulation and 3D exploration.
 
 ---
 
-Built as a personal GTA-style game experiment.
+Built as a personal GTA-style experiment.

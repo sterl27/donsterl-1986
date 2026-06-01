@@ -4,13 +4,33 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-function Avatar({ position, rotation }: { position: [number, number, number]; rotation: number }) {
-  const group = useRef<THREE.Group>(null!);
+interface Collectible {
+  id: number;
+  position: [number, number, number];
+  collected: boolean;
+}
 
-  useFrame(() => {
+function Avatar({ position, rotation, isMoving }: { 
+  position: [number, number, number]; 
+  rotation: number;
+  isMoving: boolean;
+}) {
+  const group = useRef<THREE.Group>(null!);
+  const bobRef = useRef(0);
+
+  useFrame((state, delta) => {
     if (group.current) {
       group.current.position.set(...position);
       group.current.rotation.y = rotation;
+
+      if (isMoving) {
+        bobRef.current += delta * 13;
+        const bob = Math.sin(bobRef.current) * 0.09;
+        group.current.position.y = bob;
+      } else {
+        bobRef.current = 0;
+        group.current.position.y = 0;
+      }
     }
   });
 
@@ -32,50 +52,74 @@ function Avatar({ position, rotation }: { position: [number, number, number]; ro
   );
 }
 
-function City() {
+function City({ collectibles }: { collectibles: Collectible[] }) {
   return (
     <group>
       <mesh rotation={[-Math.PI * 0.5, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-        <planeGeometry args={[200, 200]} />
+        <planeGeometry args={[220, 220]} />
         <meshStandardMaterial color="#0c0f18" />
       </mesh>
       <mesh rotation={[-Math.PI * 0.5, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
-        <planeGeometry args={[16, 200]} />
+        <planeGeometry args={[18, 220]} />
         <meshStandardMaterial color="#151a26" />
       </mesh>
 
-      {[-55, 55].map((x, i) => (
-        <mesh key={i} position={[x, 24, -48]} castShadow receiveShadow>
-          <boxGeometry args={[26, 48, 26]} />
+      {/* Buildings */}
+      {[-60, 60].map((x, i) => (
+        <mesh key={i} position={[x, 26, -52]} castShadow receiveShadow>
+          <boxGeometry args={[28, 52, 28]} />
           <meshStandardMaterial color="#1c2438" />
         </mesh>
       ))}
-      {[-55, 55].map((x, i) => (
-        <mesh key={i} position={[x, 20, 52]} castShadow receiveShadow>
-          <boxGeometry args={[26, 40, 26]} />
+      {[-60, 60].map((x, i) => (
+        <mesh key={i} position={[x, 22, 56]} castShadow receiveShadow>
+          <boxGeometry args={[28, 44, 28]} />
           <meshStandardMaterial color="#1c2438" />
         </mesh>
       ))}
 
-      {/* Neon signs */}
-      <mesh position={[-54, 34, -47]} castShadow>
-        <planeGeometry args={[14, 6]} />
-        <meshStandardMaterial color="#ff2d55" emissive="#ff2d55" emissiveIntensity={2.2} />
+      {/* Neon */}
+      <mesh position={[-59, 38, -51]} castShadow>
+        <planeGeometry args={[16, 7]} />
+        <meshStandardMaterial color="#ff2d55" emissive="#ff2d55" emissiveIntensity={2.5} />
       </mesh>
-      <mesh position={[54, 30, 51]} castShadow>
-        <planeGeometry args={[14, 6]} />
-        <meshStandardMaterial color="#ff2d55" emissive="#ff2d55" emissiveIntensity={2.2} />
+      <mesh position={[59, 34, 55]} castShadow>
+        <planeGeometry args={[16, 7]} />
+        <meshStandardMaterial color="#ff2d55" emissive="#ff2d55" emissiveIntensity={2.5} />
       </mesh>
+
+      {/* Collectibles - glowing orbs */}
+      {collectibles.map((item, index) => 
+        !item.collected && (
+          <mesh key={index} position={item.position} castShadow>
+            <sphereGeometry args={[1.2]} />
+            <meshStandardMaterial 
+              color="#ff2d55" 
+              emissive="#ff2d55" 
+              emissiveIntensity={3}
+            />
+          </mesh>
+        )
+      )}
     </group>
   );
 }
 
-function PlayerController({ onUpdate }: { onUpdate: (pos: [number, number, number], rot: number) => void }) {
+function PlayerController({ 
+  onUpdate, 
+  collectibles, 
+  setCollectibles 
+}: { 
+  onUpdate: (pos: [number, number, number], rot: number, moving: boolean) => void;
+  collectibles: Collectible[];
+  setCollectibles: React.Dispatch<React.SetStateAction<Collectible[]>>;
+}) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
   const pos = useRef<[number, number, number]>([0, 0, 0]);
   const rot = useRef(0);
-  const yaw = useRef(0); // mouse look
+  const yaw = useRef(0);
+  const isMovingRef = useRef(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = true; };
@@ -83,7 +127,7 @@ function PlayerController({ onUpdate }: { onUpdate: (pos: [number, number, numbe
 
     const handleMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement) {
-        yaw.current -= e.movementX * 0.002;
+        yaw.current -= e.movementX * 0.0022;
       }
     };
 
@@ -106,9 +150,10 @@ function PlayerController({ onUpdate }: { onUpdate: (pos: [number, number, numbe
   }, []);
 
   useFrame((state, delta) => {
-    const speed = 26 * delta;
+    const speed = 28 * delta;
     let [x, y, z] = pos.current;
     let newRot = rot.current;
+    let moving = false;
 
     const forward = keys.current['w'] || keys.current['arrowup'];
     const backward = keys.current['s'] || keys.current['arrowdown'];
@@ -127,9 +172,9 @@ function PlayerController({ onUpdate }: { onUpdate: (pos: [number, number, numbe
     if (len > 0) {
       moveX /= len;
       moveZ /= len;
+      moving = true;
     }
 
-    // Move relative to camera yaw
     const moveAngle = yaw.current;
     const worldMoveX = moveX * Math.cos(moveAngle) - moveZ * Math.sin(moveAngle);
     const worldMoveZ = moveX * Math.sin(moveAngle) + moveZ * Math.cos(moveAngle);
@@ -137,26 +182,43 @@ function PlayerController({ onUpdate }: { onUpdate: (pos: [number, number, numbe
     x += worldMoveX * speed;
     z += worldMoveZ * speed;
 
-    if (moveX !== 0 || moveZ !== 0) {
+    if (moving) {
       newRot = yaw.current + Math.atan2(moveX, moveZ);
     }
 
-    x = Math.max(-85, Math.min(85, x));
-    z = Math.max(-85, Math.min(85, z));
+    // Collectibles
+    const newCollectibles = collectibles.map(item => {
+      if (!item.collected) {
+        const dx = x - item.position[0];
+        const dz = z - item.position[2];
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 4) {
+          return { ...item, collected: true };
+        }
+      }
+      return item;
+    });
+
+    if (JSON.stringify(newCollectibles) !== JSON.stringify(collectibles)) {
+      setCollectibles(newCollectibles);
+    }
+
+    x = Math.max(-90, Math.min(90, x));
+    z = Math.max(-90, Math.min(90, z));
 
     pos.current = [x, y, z];
     rot.current = newRot;
+    isMovingRef.current = moving;
 
-    onUpdate(pos.current, rot.current);
+    onUpdate(pos.current, rot.current, moving);
 
-    // Camera
-    const camX = x - Math.sin(yaw.current) * 15;
-    const camZ = z - Math.cos(yaw.current) * 15;
+    const camX = x - Math.sin(yaw.current) * 16;
+    const camZ = z - Math.cos(yaw.current) * 16;
 
     camera.position.x = camX;
-    camera.position.y = 15.5;
+    camera.position.y = 16;
     camera.position.z = camZ;
-    camera.lookAt(x, 4, z);
+    camera.lookAt(x, 4.2, z);
   });
 
   return null;
@@ -165,28 +227,83 @@ function PlayerController({ onUpdate }: { onUpdate: (pos: [number, number, numbe
 export default function ThreeWorld() {
   const [playerPos, setPlayerPos] = useState<[number, number, number]>([0, 0, 0]);
   const [playerRot, setPlayerRot] = useState(0);
+  const [isMoving, setIsMoving] = useState(false);
+  const [cash, setCash] = useState(12450000);
 
-  const handleUpdate = (pos: [number, number, number], rot: number) => {
+  const [collectibles, setCollectibles] = useState<Collectible[]>([
+    { id: 1, position: [-35, 2, -25], collected: false },
+    { id: 2, position: [28, 2, -18], collected: false },
+    { id: 3, position: [-12, 2, 32], collected: false },
+    { id: 4, position: [42, 2, 38], collected: false },
+    { id: 5, position: [-48, 2, 12], collected: false },
+  ]);
+
+  const collectedCount = collectibles.filter(c => c.collected).length;
+
+  const handleUpdate = (pos: [number, number, number], rot: number, moving: boolean) => {
     setPlayerPos(pos);
     setPlayerRot(rot);
+    setIsMoving(moving);
   };
 
-  return (
-    <div className="relative w-full h-[660px] rounded-2xl overflow-hidden border border-[#ff2d55]/30 bg-black cursor-pointer">
-      <Canvas camera={{ position: [0, 15, 16], fov: 62 }} style={{ background: '#0a0c14' }} shadows>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[60, 80, 50]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} />
+  // Update cash when collecting
+  useEffect(() => {
+    const collected = collectibles.filter(c => c.collected).length;
+    if (collected > 0) {
+      setCash(12450000 + collected * 25000);
+    }
+  }, [collectibles]);
 
-        <City />
-        <Avatar position={playerPos} rotation={playerRot} />
-        <PlayerController onUpdate={handleUpdate} />
+  return (
+    <div className="relative w-full h-[680px] rounded-2xl overflow-hidden border border-[#ff2d55]/30 bg-black cursor-pointer">
+      <Canvas camera={{ position: [0, 16, 16], fov: 62 }} style={{ background: '#0a0c14' }} shadows>
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[60, 85, 55]} intensity={1.6} castShadow shadow-mapSize={[2048, 2048]} />
+
+        <City collectibles={collectibles} />
+        <Avatar position={playerPos} rotation={playerRot} isMoving={isMoving} />
+        <PlayerController 
+          onUpdate={handleUpdate} 
+          collectibles={collectibles} 
+          setCollectibles={setCollectibles} 
+        />
       </Canvas>
 
-      <div className="absolute bottom-5 left-5 text-xs tracking-[3px] text-[#444]">
-        WASD = MOVE • CLICK TO LOCK MOUSE • MOUSE = LOOK
+      {/* Minimap */}
+      <div className="absolute top-4 right-4 w-36 h-36 bg-black/70 border border-[#ff2d55]/40 rounded-full overflow-hidden">
+        <div className="relative w-full h-full">
+          {/* Player dot */}
+          <div 
+            className="absolute w-2.5 h-2.5 bg-[#ff2d55] rounded-full z-10"
+            style={{
+              left: `${((playerPos[0] + 90) / 180) * 100}%`,
+              top: `${((playerPos[2] + 90) / 180) * 100}%`,
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+          {/* Collectibles on minimap */}
+          {collectibles.map((c, i) => 
+            !c.collected && (
+              <div 
+                key={i}
+                className="absolute w-1.5 h-1.5 bg-yellow-400 rounded-full"
+                style={{
+                  left: `${((c.position[0] + 90) / 180) * 100}%`,
+                  top: `${((c.position[2] + 90) / 180) * 100}%`,
+                  transform: 'translate(-50%, -50%)'
+                }}
+              />
+            )
+          )}
+        </div>
       </div>
-      <div className="absolute top-5 right-5 bg-black/60 px-4 py-1 text-xs tracking-widest">
-        GOLDCREST HILLS • MODEL CITIZEN
+
+      {/* HUD */}
+      <div className="absolute bottom-5 left-5 text-xs tracking-[3px] text-[#444]">
+        WASD = MOVE • CLICK + MOUSE = LOOK
+      </div>
+      <div className="absolute top-5 left-5 bg-black/60 px-4 py-1 text-xs tracking-widest">
+        CASH: <span className="text-[#ff2d55]">${cash.toLocaleString()}</span> • COLLECTED: {collectedCount}/5
       </div>
     </div>
   );

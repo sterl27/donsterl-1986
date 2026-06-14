@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -83,11 +83,21 @@ function useSound() {
 
   const stopEngine = () => {
     if (engineOscRef.current) {
-      engineOscRef.current.stop();
+      try { engineOscRef.current.stop(); } catch {}
       engineOscRef.current = null;
       engineGainRef.current = null;
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopEngine();
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   return { playFootstep, startEngine, stopEngine };
 }
@@ -168,16 +178,15 @@ function CarModel({ position, rotation, isPlayerCar }: {
   rotation: number;
   isPlayerCar?: boolean;
 }) {
+  const bodyGeo = useMemo(() => new THREE.BoxGeometry(3.2, 1.4, 5.5), []);
+  const roofGeo = useMemo(() => new THREE.BoxGeometry(2.4, 1.1, 3), []);
+  const bodyMat = useMemo(() => new THREE.MeshStandardMaterial({ color: isPlayerCar ? "#ff2d55" : "#1f2535" }), [isPlayerCar]);
+  const roofMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#111111" }), []);
+
   return (
     <group position={position} rotation={[0, rotation, 0]}>
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <boxGeometry args={[3.2, 1.4, 5.5]} />
-        <meshStandardMaterial color={isPlayerCar ? "#ff2d55" : "#1f2535"} />
-      </mesh>
-      <mesh position={[0, 2.1, 0]} castShadow>
-        <boxGeometry args={[2.4, 1.1, 3]} />
-        <meshStandardMaterial color="#111111" />
-      </mesh>
+      <mesh geometry={bodyGeo} material={bodyMat} position={[0, 1.2, 0]} castShadow />
+      <mesh geometry={roofGeo} material={roofMat} position={[0, 2.1, 0]} castShadow />
     </group>
   );
 }
@@ -234,6 +243,17 @@ function City({ collectibles }: { collectibles: Collectible[] }) {
       <StreetLight position={[35, 0, 40]} />
       <StreetLight position={[-70, 0, 0]} />
       <StreetLight position={[70, 0, 0]} />
+
+      {/* Visible collectibles - glowing Vice City briefcases */}
+      {collectibles.filter(c => !c.collected).map((c, i) => (
+        <group key={i} position={c.position}>
+          <mesh position={[0, 1.2, 0]} castShadow>
+            <boxGeometry args={[0.9, 0.6, 1.4]} />
+            <meshStandardMaterial color="#f4d03f" metalness={0.7} roughness={0.3} emissive="#f4d03f" emissiveIntensity={0.6} />
+          </mesh>
+          <pointLight position={[0, 2.2, 0]} color="#f4d03f" intensity={2.5} distance={18} />
+        </group>
+      ))}
     </group>
   );
 }
@@ -266,7 +286,7 @@ function PlayerController({
   missions: Mission[];
   setMissions: React.Dispatch<React.SetStateAction<Mission[]>>;
   playFootstep: () => void;
-  startEngine: () => void;
+  startEngine: (speed?: number) => void;
   stopEngine: () => void;
 }) {
   const { camera } = useThree();
@@ -277,6 +297,11 @@ function PlayerController({
   const isMovingRef = useRef(false);
   const lastFootstep = useRef(0);
   const lastCollectTime = useRef(0);
+  const collectRef = useRef(collectibles);
+  const missionsRef = useRef(missions);
+
+  useEffect(() => { collectRef.current = collectibles; }, [collectibles]);
+  useEffect(() => { missionsRef.current = missions; }, [missions]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -371,9 +396,10 @@ function PlayerController({
       stopEngine();
     }
 
-    // Collectibles + Wanted + Missions
+    // Collectibles + Wanted + Missions (using refs to avoid expensive JSON.stringify every frame)
     const now = Date.now();
-    const newCollectibles = collectibles.map(item => {
+    let didCollect = false;
+    const updatedCollectibles = collectRef.current.map(item => {
       if (!item.collected) {
         const dx = x - item.position[0];
         const dz = z - item.position[2];
@@ -385,26 +411,31 @@ function PlayerController({
               setWantedLevel(Math.min(5, wantedLevel + 1));
             }
           }
+          didCollect = true;
           return { ...item, collected: true };
         }
       }
       return item;
     });
 
-    const collectedCount = newCollectibles.filter(c => c.collected).length;
-    const newMissions = missions.map(m => {
-      if (!m.completed && collectedCount >= 3 && m.id === 1) {
+    if (didCollect) {
+      setCollectibles(updatedCollectibles);
+      collectRef.current = updatedCollectibles;
+    }
+
+    const collectedCountNow = updatedCollectibles.filter(c => c.collected).length;
+    let didMission = false;
+    const updatedMissions = missionsRef.current.map(m => {
+      if (!m.completed && collectedCountNow >= 3 && m.id === 1) {
+        didMission = true;
         return { ...m, completed: true };
       }
       return m;
     });
 
-    if (JSON.stringify(newMissions) !== JSON.stringify(missions)) {
-      setMissions(newMissions);
-    }
-
-    if (JSON.stringify(newCollectibles) !== JSON.stringify(collectibles)) {
-      setCollectibles(newCollectibles);
+    if (didMission) {
+      setMissions(updatedMissions);
+      missionsRef.current = updatedMissions;
     }
 
     x = Math.max(-95, Math.min(95, x));
@@ -470,7 +501,7 @@ export default function ThreeWorld() {
   }, [collectibles]);
 
   return (
-    <div className="relative w-full h-[700px] rounded-2xl overflow-hidden border border-[#ff2d55]/30 bg-black cursor-pointer">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-[#ff2d55]/30 bg-black cursor-pointer">
       <Canvas camera={{ position: [0, 16, 16], fov: 62 }} style={{ background: '#0a0c14' }} shadows>
         <ambientLight intensity={0.45} />
         <directionalLight position={[65, 90, 60]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} />
